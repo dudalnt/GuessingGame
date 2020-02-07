@@ -1,6 +1,7 @@
 package com.example.guessinggame;
 
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -10,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.preference.PreferenceManager;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
@@ -47,21 +49,26 @@ public class MainActivity extends AppCompatActivity {
             int guess = Integer.parseInt(guessText);
             if (guess < theNumber && guess <= range){
                 count = count + 1;
-                countTry=findViewById(R.id.countTry);
+                countTry = findViewById(R.id.countTry);
                 countTry.setText(Integer.toString(count));
                 message = guess + " меньше загаданного";
             }
             else if (guess > theNumber && guess <= range){
                 count = count + 1;
-                countTry=findViewById(R.id.countTry);
+                countTry = findViewById(R.id.countTry);
                 countTry.setText(Integer.toString(count));
                 message = guess + " больше загаданного";
             }
             else if (guess <= range){
                 count = count + 1;
-                countTry=findViewById(R.id.countTry);
+                countTry = findViewById(R.id.countTry);
                 countTry.setText(Integer.toString(count));
                 message = "Вы угадали за " + count + " попыток! Давайте сыграем ещё!";
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                int gamesWon = preferences.getInt("gamesWon", 0) + 1;
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putInt("gamesWon", gamesWon);
+                editor.apply();
                 newGame();
             }
             else {
@@ -70,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e){
             message = e.getMessage();
         } finally {
-            countTry=findViewById(R.id.countTry);
+            countTry = findViewById(R.id.countTry);
             countTry.setText(Integer.toString(count));
 
             resText.setText(message);
@@ -88,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
         guessBtn = (Button) findViewById(R.id.guessBtn);
         resText = (TextView) findViewById(R.id.resText);
         lblRange =(TextView) findViewById(R.id.textProps);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        range = preferences.getInt("range", 100);
         newGame();
         resText.setText("Веведите число, а за тем нажмите на кнопку 'Проверить'");
         guessBtn.setOnClickListener(new View.OnClickListener() {
@@ -124,6 +133,18 @@ public class MainActivity extends AppCompatActivity {
                 newGame();
                 return true;
             case R.id.action_gamestats:
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                int gamesWon = preferences.getInt("gamesWon", 0);
+                AlertDialog statDialog = new AlertDialog.Builder(MainActivity.this).create();
+                statDialog.setTitle("Статистика");
+                statDialog.setMessage("Ты выиграл " + gamesWon + "раз.");
+                statDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                statDialog.show();
                 return true;
             case R.id.action_settings:
                 final CharSequence[] items = {"1 to 10", "1 to 100", "1 to 1000"};
@@ -135,21 +156,24 @@ public class MainActivity extends AppCompatActivity {
                         switch (item){
                             case 0:
                                 range = 10;
+                                storeRange(10);
                                 newGame();
                                 break;
                             case 1:
                                 range = 100;
+                                storeRange(100);
                                 newGame();
                                 break;
                             case 2:
                                 range = 1000;
+                                storeRange(1000);
                                 newGame();
                                 break;
                         }
                         dialog.dismiss();
                     }
                 });
-                AlertDialog alert =builder.create();
+                AlertDialog alert = builder.create();
                 alert.show();
                 return true;
             case R.id.action_about:
@@ -169,4 +193,13 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    public void storeRange (int newRange){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("range", newRange);
+        editor.apply();
+
+    }
+
 }
